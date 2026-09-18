@@ -1,0 +1,1 @@
+<nav class="shell shopping-nav" aria-label="Moj izbor"><a href="{{route('favorites')}}">♡ Moja lista</a><a href="{{route('compare')}}">⇄ Poređenje <b>{{count(session('comparison',[]))}}/3</b></a><a href="{{route('catalog',['personal'=>1])}}#rezultati">✦ Moji parovi</a><a href="{{route('shopping.preferences')}}">Moji filteri ↗</a></nav>

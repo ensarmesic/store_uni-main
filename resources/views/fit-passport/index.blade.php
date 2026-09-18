@@ -1,0 +1,24 @@
+@extends('layouts.workspace')
+@section('title', 'Moje veličine')
+@section('content')
+<div class="tool-heading"><div><div class="section-kicker">FIT PASSPORT / MANJE NAGAĐANJA</div><h1>Tvoj broj.<br><em>Tvoj pravi par.</em></h1><p>Broj na kutiji nije cijela priča. Sačuvaj kako ti model stvarno odgovara i lakše odaberi sljedeći.</p></div><span class="heading-tag">FIT PASSPORT ↔</span></div>
+@unless(session('user_id'))<div class="guest-note"><span>Veličine se trenutno čuvaju u ovoj sesiji preglednika. Poveži ih s računom da ih koristiš i na drugim uređajima.</span><a class="tool-link" href="{{route('account')}}">Sačuvaj na profilu ↗</a></div>@endunless
+<div class="tool-stats"><div><strong>{{$entries->count()}}</strong><span>SAČUVANIH<br>MODELA I VELIČINA</span></div><div><strong>{{$entries->pluck('product.brand')->unique()->count()}}</strong><span>BRENDOVA<br>KOJE NOSIŠ</span></div><div><strong>{{$entries->where('fit','just_right')->count()}}</strong><span>PAROVA KOJI<br>SU TAMAN</span></div></div>
+<div class="tool-columns">
+<div class="saved-list">
+@forelse($entries as $entry)
+<article class="saved-card"><div class="saved-card-head"><div><span class="mini-label">{{$entry->product->brand}}</span><h3><a href="{{route('product.show', $entry->product->slug)}}">{{$entry->product->model ?: $entry->product->name}}</a></h3></div><span class="status-pill {{$entry->fit==='just_right'?'good':'warm'}}">{{match($entry->fit){'tight'=>'Tijesne','wide'=>'Široke',default=>'Taman ✓'} }}</span></div><div class="saved-meta"><div class="fit-size"><small>EU</small> {{$entry->size}}</div><span class="field-help">Tvoj zabilježeni broj<br>za ovaj model</span></div><div class="saved-card-actions"><a class="tool-link" href="{{route('catalog',['brand'=>$entry->product->brand,'size'=>$entry->size])}}#rezultati">Istraži ovaj brend u EU {{$entry->size}} ↗</a><form method="post" action="{{route('fit-passport.destroy',$entry)}}">@csrf @method('DELETE')<button class="delete-button" type="submit" aria-label="Ukloni {{$entry->product->name}} EU {{$entry->size}}">Ukloni zapis</button></form></div></article>
+@empty
+<div class="empty-tool"><span class="empty-symbol" aria-hidden="true">↔</span><h2>Počni s parom koji već nosiš.</h2><p>Pronađi svoj model u pretrazi, upiši broj s etikete i odaberi kako ti odgovara. Tvoj prvi zapis je najbolja polazna tačka.</p><a class="tool-button tool-button-blue" href="#dodaj-model">Dodaj prvi par <b>↗</b></a></div>
+@endforelse
+@if($entries->isNotEmpty())<div class="tool-panel panel-dark"><div class="section-kicker">ISKORISTI SVOJE ZAPISE</div><h2>Sljedeći par? Kreni od poznatog.</h2><p>Na stranici proizvoda vidi preporuku na osnovu sačuvanih podataka. Krojevi se razlikuju: preporuka je orijentacija, a tvoj osjećaj pri nošenju ostaje najvažniji.</p><a class="tool-button tool-button-acid" href="{{route('catalog')}}">Istraži katalog <b>↗</b></a></div>@endif
+</div>
+<section class="tool-panel" id="dodaj-model"><div class="section-kicker">+ DODAJ PAR</div><h2>Koje patike već imaš?</h2><p>Pretraži naziv ili brend, pa upiši svoju veličinu. Možeš dodati i broj koji trenutno nije u prodaji.</p><form class="tool-search" method="get" action="{{route('fit-passport')}}#dodaj-model"><label class="sr-only" for="fit-search">Naziv modela ili brenda</label><input id="fit-search" name="q" value="{{request('q')}}" placeholder="npr. Nike Air Max" minlength="2" maxlength="100" required><button class="tool-button" type="submit">Pronađi <b>↗</b></button></form>
+@if(request()->filled('q'))
+<p class="field-help">Prikazano do 8 podudaranja. Precizniji naziv sužava izbor.</p>
+@forelse($candidates as $candidate)
+<details class="search-match"><summary><span class="mini-label">{{$candidate->brand}}</span><strong>{{$candidate->name}}</strong><small>{{collect([$candidate->color, match($candidate->gender){'male'=>'Muškarci','female'=>'Žene','kids'=>'Djeca',default=>'Unisex'}])->filter()->join(' · ')}} · Dodaj veličinu +</small></summary><form class="compact-form" method="post" action="{{route('fit-passport.store',$candidate)}}">@csrf<div class="inline-fields"><div class="tool-field"><label for="size-{{$candidate->id}}">EU veličina</label><input id="size-{{$candidate->id}}" name="size" placeholder="npr. 43 ili 42 2/3" maxlength="20" required></div><div class="tool-field"><label for="fit-{{$candidate->id}}">Kako odgovara?</label><select id="fit-{{$candidate->id}}" name="fit"><option value="just_right">Taman</option><option value="tight">Tijesne</option><option value="wide">Široke</option></select></div></div><button class="tool-button" type="submit">Sačuvaj veličinu <b>+</b></button></form></details>
+@empty<p class="notice">Nema tog modela u katalogu. Pokušaj s kraćim nazivom ili samo brendom.</p>@endforelse
+@else<p class="field-help">Naziv s kutije → EU broj s etikete → osjećaj pri nošenju. Tri mala koraka, korisna referenca za sljedeću kupovinu.</p>@endif
+</section></div>
+@endsection

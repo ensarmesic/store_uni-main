@@ -1,0 +1,3 @@
+<?php
+namespace App\Models; use Illuminate\Database\Eloquent\Model;
+class Offer extends Model {protected $guarded=[];protected $casts=['price'=>'decimal:2','old_price'=>'decimal:2','last_checked_at'=>'datetime','last_seen_at'=>'datetime','missing_since'=>'datetime','is_active'=>'boolean'];public function product(){return $this->belongsTo(Product::class);}public function store(){return $this->belongsTo(Store::class);}public function variants(){return $this->hasMany(OfferVariant::class);}public function priceHistories(){return $this->hasMany(PriceHistory::class);}}
