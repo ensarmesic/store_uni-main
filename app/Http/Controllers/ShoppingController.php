@@ -32,13 +32,23 @@ class ShoppingController
 
     public function compare(Request $request, OfferSelection $selection, ShoppingProfile $profile)
     {
-        $request->validate(['size' => ['nullable', 'string', 'max:20']]);
-        $ids = $request->session()->get('comparison', []);
+        $request->validate([
+            'size' => ['nullable', 'string', 'max:20'],
+            'models' => ['sometimes', 'array', 'min:1', 'max:3'],
+            'models.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ]);
+        $shared = $request->has('models');
+        $ids = $shared ? array_map('intval', $request->input('models')) : $request->session()->get('comparison', []);
         $products = Product::whereIn('id', $ids)->with(['offers.store', 'offers.variants'])->get()->sortBy(fn ($product) => array_search($product->id, $ids))->values();
-        $size = $request->input('size', $profile->preferences($request)['size'] ?? null);
+        $size = $request->input('size', $shared ? null : ($profile->preferences($request)['size'] ?? null));
         $offers = $products->mapWithKeys(fn ($product) => [$product->id => $selection->for($product, $size)]);
         $sizes = $products->flatMap->offers->flatMap->variants->where('availability', 'in_stock')->pluck('size')->unique()->sortBy(fn ($s) => (float) $s);
-        return view('shopping.compare', compact('products', 'size', 'offers', 'sizes'));
+        $comparisonQuery = $shared ? ['models' => $products->pluck('id')->all()] : [];
+        $shareUrl = route('compare', ['models' => $products->pluck('id')->all(), 'size' => $size ?? '']);
+        $bestPrices = $offers->map(fn ($items) => $items->first()['price'] ?? null)->filter(fn ($price) => $price !== null);
+        $lowestPrice = $bestPrices->min();
+        $missingModels = count($ids) - $products->count();
+        return view('shopping.compare', compact('products', 'size', 'offers', 'sizes', 'shared', 'comparisonQuery', 'shareUrl', 'bestPrices', 'lowestPrice', 'missingModels'));
     }
 
     public function addComparison(Request $request, Product $product)

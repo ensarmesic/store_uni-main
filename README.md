@@ -33,6 +33,8 @@ Use `/scanner` to upload a shoe label photo. The local OCR backend is Tesseract;
 php artisan alerts:check
 ```
 
+Na `/compare` možeš podijeliti do tri odabrana modela i EU veličinu dugmetom „Kopiraj link“. Link radi bez prijave, prikazuje aktuelne evidentirane cijene i ne mijenja primaočev vlastiti izbor za poređenje. Tabela označava najpovoljnije modele i razliku u KM za odabranu veličinu; dostava nije uključena. Ako kopiranje nije podržano, link se može označiti i kopirati ručno.
+
 Aktivni importer slugovi su `sportvision`, `buzz`, `sportreality`, `intersport`, `thespot`, `nsport`, `planika`, `underarmour`, `deichmann`, `officeshoes`, `astra` i `djaksport`. Izvori su ograničeni eksplicitnom BiH allowlistom u `config/catalog.php`. Podržani su sportski i lifestyle brendovi zastupljeni u domaćim trgovinama, uključujući ASICS, Nike, adidas, New Balance, Puma, Hoka, Skechers, Reebok, Salomon, Mizuno, On, Converse, Under Armour, ECCO, Geox, Fila, Joma, Umbro, Diadora, Head i druge.
 
 Trenutna lokalna baza sadrži 4.654 modela, 5.660 ponuda i 75 brendova iz osam provjerenih trgovina: Sport Vision, Buzz Sneakers, N Sport BiH, Under Armour BiH, Sport Reality, Office Shoes BiH, Planika BiH i Deichmann BiH. Puni uvoz prati sve javne stranice kategorija i Office Shoes load-more rezultate. Konektori za izvore koji privremeno blokiraju javni katalog ostaju odvojeni dok se ne može garantovati pouzdan uvoz.
