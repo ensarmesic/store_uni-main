@@ -1,7 +1,7 @@
 @extends('layouts.workspace')
 @section('title', 'Moje veličine')
 @section('content')
-<div class="tool-heading"><div><div class="section-kicker">FIT PASSPORT / MANJE NAGAĐANJA</div><h1>Tvoj broj.<br><em>Tvoj pravi par.</em></h1><p>Broj na kutiji nije cijela priča. Sačuvaj kako ti model stvarno odgovara i lakše odaberi sljedeći.</p></div><span class="heading-tag">FIT PASSPORT ↔</span></div>
+<div class="tool-heading"><div><div class="section-kicker">FIT DNA / MANJE NAGAĐANJA</div><h1>Tvoj broj.<br><em>Tvoj pravi par.</em></h1><p>Broj na kutiji nije cijela priča. Sačuvaj kako ti model stvarno odgovara i lakše odaberi sljedeći.</p></div><span class="heading-tag">FIT DNA ↔</span></div>
 @unless(session('user_id'))<div class="guest-note"><span>Veličine se trenutno čuvaju u ovoj sesiji preglednika. Poveži ih s računom da ih koristiš i na drugim uređajima.</span><a class="tool-link" href="{{route('account')}}">Sačuvaj na profilu ↗</a></div>@endunless
 <div class="tool-stats"><div><strong>{{$entries->count()}}</strong><span>SAČUVANIH<br>MODELA I VELIČINA</span></div><div><strong>{{$entries->pluck('product.brand')->unique()->count()}}</strong><span>BRENDOVA<br>KOJE NOSIŠ</span></div><div><strong>{{$entries->where('fit','just_right')->count()}}</strong><span>PAROVA KOJI<br>SU TAMAN</span></div></div>
 <div class="tool-columns">

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\PriceHistory;
+use App\Models\VariantPriceHistory;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -12,13 +13,25 @@ class ProductPriceInsights
     public function for(Product $product, ?string $size = null): array
     {
         $now = now();
-        $history = PriceHistory::query()
+        $history = $size ? VariantPriceHistory::query()
+            ->join('offer_variants', 'offer_variants.id', '=', 'variant_price_histories.offer_variant_id')
+            ->join('offers', 'offers.id', '=', 'offer_variants.offer_id')
+            ->where('offers.product_id', $product->id)->where('offer_variants.size', $size)
+            ->where('variant_price_histories.price', '>', 0)->where('recorded_at', '<=', $now)
+            ->select(['variant_price_histories.price', 'variant_price_histories.recorded_at'])
+            ->orderBy('recorded_at')->get() : PriceHistory::query()
             ->join('offers', 'offers.id', '=', 'price_histories.offer_id')
             ->where('offers.product_id', $product->id)
             ->where('price_histories.price', '>', 0)
+            ->where('price_histories.recorded_at', '<=', $now)
             ->select(['price_histories.price', 'price_histories.recorded_at'])
             ->orderBy('price_histories.recorded_at')
             ->get();
+
+        $product->loadMissing('offers.variants');
+        // Daily market minima prevent stores/import frequency from dominating size history.
+        if ($size) $history = $history->groupBy(fn ($entry) => Carbon::parse($entry->recorded_at)->toDateString())
+            ->map(fn ($entries) => $entries->sortBy('price')->first())->values();
 
         $currentPrices = $product->offers
             ->where('is_active', true)
@@ -37,6 +50,7 @@ class ProductPriceInsights
         }
 
         $allPrices = $history->pluck('price')->map(fn ($price) => (float) $price);
+        $recentHistory = $history->filter(fn ($entry) => Carbon::parse($entry->recorded_at)->gte($now->copy()->subDays(90)))->values();
         $percentile = $current && $allPrices->isNotEmpty()
             ? round($allPrices->filter(fn ($price) => $price <= $current)->count() / $allPrices->count() * 100)
             : null;
@@ -54,6 +68,10 @@ class ProductPriceInsights
             'deal_score' => $this->dealScore($current, $averages[90], $lows[90]),
             'store_count' => $currentPrices->count(),
             'size' => $size,
+            'history_scope' => $size ? 'size' : 'model',
+            'observed_days_90' => $history->filter(fn ($entry) => Carbon::parse($entry->recorded_at)->gte($now->copy()->subDays(90)))
+                ->map(fn ($entry) => Carbon::parse($entry->recorded_at)->toDateString())->unique()->count(),
+            'history_span_days' => $recentHistory->isEmpty() ? 0 : (int) Carbon::parse($recentHistory->first()->recorded_at)->diffInDays(Carbon::parse($recentHistory->last()->recorded_at)),
         ];
     }
 

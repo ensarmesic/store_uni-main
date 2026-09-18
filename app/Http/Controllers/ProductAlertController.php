@@ -44,6 +44,7 @@ class ProductAlertController
             'target_price' => $data['type'] === 'price' ? $data['target_price'] : null,
         ];
         $existing = ProductAlert::where(fn ($query) => $this->ownerQuery($query, $request))->where($attributes)->first();
+        app(\App\Services\ProductInteractions::class)->record($request, $product, 'alert');
         if ($existing) {
             $existing->update(['is_active' => true, 'triggered_at' => null]);
         } else {

@@ -38,6 +38,16 @@ class OfferFreshnessTest extends TestCase
         $offer = Offer::firstOrFail();
         $this->assertTrue($offer->is_active);
         $this->assertSame(1, OfferVariantAvailabilityHistory::where('offer_variant_id', $offer->variants()->first()->id)->count());
+        $this->assertDatabaseHas('variant_price_histories', ['offer_variant_id' => $offer->variants()->first()->id, 'price' => 199.90]);
+        $this->assertNotNull($offer->sizes_checked_at);
+        $importer->products[0]['variant_prices'] = ['43' => 179.90];
+        $manager->import($importer);
+        $this->assertDatabaseCount('variant_price_histories', 1);
+        $this->assertDatabaseHas('variant_price_histories', ['price' => 179.90]);
+        $this->travel(1)->days();
+        $manager->import($importer);
+        $this->assertDatabaseCount('variant_price_histories', 2);
+        $this->travelBack();
 
         $importer->products = [[
             'store_product_id' => 'sku-1', 'brand' => 'Nike', 'model' => 'Air Max Test',

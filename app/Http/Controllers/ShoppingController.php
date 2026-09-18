@@ -21,6 +21,7 @@ class ShoppingController
     public function saveFavorite(Request $request, Product $product, ShoppingProfile $profile)
     {
         Favorite::firstOrCreate(['owner_key' => $profile->owner($request), 'product_id' => $product->id]);
+        app(\App\Services\ProductInteractions::class)->record($request, $product, 'favorite');
         return back()->with('status', 'Model je sačuvan u Moju listu.');
     }
 
@@ -57,6 +58,7 @@ class ShoppingController
         if (in_array($product->id, $ids)) return back();
         if (count($ids) >= 3) return back()->withErrors(['comparison' => 'Možeš porediti do 3 modela. Ukloni jedan iz poređenja pa dodaj novi.']);
         $request->session()->put('comparison', [...$ids, $product->id]);
+        app(\App\Services\ProductInteractions::class)->record($request, $product, 'compare');
         return back()->with('status', 'Model je dodan u poređenje.');
     }
 

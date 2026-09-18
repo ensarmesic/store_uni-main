@@ -1,5 +1,5 @@
 <div class="product-tools">
-    @if($fit)<section class="fit-signal"><div class="section-kicker">TVOJ FIT PASSPORT</div><strong>EU {{$fit['size']}}</strong><p>{{$fit['reason']}}</p><a class="tool-link" href="{{route('fit-passport')}}">Pregledaj svoje veličine ↗</a></section>@endif
+    @if($fit)<section class="fit-signal"><div class="section-kicker">TVOJ FIT DNA</div><strong>EU {{$fit['size']}}</strong><p>{{$fit['reason']}}</p><a class="tool-link" href="{{route('fit-passport')}}">Pregledaj svoje veličine ↗</a></section>@endif
     <details class="tool-panel" @if($errors->has('fit')) open @endif><summary>↔ Već nosiš ovaj model? Sačuvaj broj.</summary><p>Zabilježi svoju veličinu i kako ti odgovara. Bit će ti pri ruci kad biraš sljedeći par.</p>
         <form class="tool-form" method="post" action="{{route('fit-passport.store',$product)}}">@csrf
             <div class="tool-field"><label for="passport-size">Tvoja EU veličina</label><input id="passport-size" name="size" list="passport-sizes" value="{{old('size',$size)}}" placeholder="npr. 43 ili 42 2/3" maxlength="20" required><datalist id="passport-sizes">@foreach($allSizes as $availableSize)<option value="{{$availableSize}}">@endforeach</datalist></div>

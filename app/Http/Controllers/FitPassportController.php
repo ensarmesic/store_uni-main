@@ -69,7 +69,7 @@ class FitPassportController
                 ], ['target_fit' => $other->fit, 'user_id' => $request->session()->get('user_id')]);
             });
 
-        return back()->with('status', 'Patike su dodane u tvoj Fit Passport.');
+        return back()->with('status', 'Patike su dodane u tvoj Fit DNA.');
     }
 
     public function destroy(Request $request, FitPassportEntry $entry)
@@ -84,7 +84,7 @@ class FitPassportController
         })->delete();
         $entry->delete();
 
-        return back()->with('status', 'Patike su uklonjene iz Fit Passport-a.');
+        return back()->with('status', 'Patike su uklonjene iz Fit DNA-a.');
     }
 
     private function passportKey(Request $request): string

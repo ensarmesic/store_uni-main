@@ -2,19 +2,24 @@
 
 namespace App\Services;
 
-use App\Models\{PriceHistory, Product};
+use App\Models\{PriceHistory, Product, VariantPriceHistory};
 
 class PriceHistoryChart
 {
-    public function for(Product $product, int $days): array
+    public function for(Product $product, int $days, ?string $size = null): array
     {
         $start = now()->subDays($days)->startOfDay();
-        $rows = PriceHistory::query()->join('offers', 'offers.id', '=', 'price_histories.offer_id')
+        $query = $size ? VariantPriceHistory::query()
+            ->join('offer_variants', 'offer_variants.id', '=', 'variant_price_histories.offer_variant_id')
+            ->join('offers', 'offers.id', '=', 'offer_variants.offer_id')->where('offer_variants.size', $size)
+            : PriceHistory::query()->join('offers', 'offers.id', '=', 'price_histories.offer_id');
+        $table = $size ? 'variant_price_histories' : 'price_histories';
+        $rows = $query
             ->join('stores', 'stores.id', '=', 'offers.store_id')
-            ->where('offers.product_id', $product->id)->where('price_histories.price', '>', 0)
+            ->where('offers.product_id', $product->id)->where($table.'.price', '>', 0)
             ->whereBetween('recorded_at', [$start, now()])
             ->orderBy('recorded_at')
-            ->get(['stores.id as store_id', 'stores.name as store_name', 'price_histories.price', 'recorded_at']);
+            ->get(['stores.id as store_id', 'stores.name as store_name', $table.'.price', 'recorded_at']);
         $low = (float) ($rows->min('price') ?? 0);
         $high = (float) ($rows->max('price') ?? 0);
         $colors = ['#3155ff', '#e44900', '#00856a', '#8b39b8', '#aa6500', '#007baf', '#bf2960', '#505829'];
@@ -30,7 +35,7 @@ class PriceHistoryChart
             })->values();
             return ['name' => $entries->first()->store_name, 'color' => $colors[$index % count($colors)], 'points' => $points];
         });
-        return ['series' => $series, 'low' => $low, 'high' => $high, 'days' => $days, 'start' => $start,
+        return ['series' => $series, 'low' => $low, 'high' => $high, 'days' => $days, 'start' => $start, 'size' => $size,
             'hasTrend' => $series->contains(fn ($line) => $line['points']->count() >= 2),
             'lastChecked' => $product->offers->max('last_checked_at')];
     }

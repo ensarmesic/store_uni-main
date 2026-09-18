@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/workspace.css?v=2">
     <script src="/js/workspace.js?v=1" defer></script>
     <link rel="stylesheet" href="/css/shopping.css?v=1">
+    <link rel="stylesheet" href="/css/intelligence.css?v=1">
 </head>
 <body class="workspace-body">
 <a class="skip-link" href="#sadrzaj">Preskoči na sadržaj</a>

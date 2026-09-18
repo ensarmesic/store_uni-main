@@ -18,9 +18,11 @@ class NaturalCatalogSearch
             $result['price_min'] = (float) str_replace(',', '.', $match[1]);
             $text = str_replace($match[0], ' ', $text);
         }
-        if (preg_match('/\b(?:eu\s*)?(4[0-9](?:[,.]\d)?)\b/u', $text, $match)) {
-            $result['size'] = str_replace(',', '.', $match[1]);
-            $text = str_replace($match[0], ' ', $text);
+        if (preg_match('/\b(?:(?:eu|broj|veličina|velicina)\s*)?((?:1[5-9]|[2-4][0-9]|5[0-5])(?:\s+[12]\/3|[,.]\d|[⅓⅔½])?)(?![\d\p{L}])/u', $text, $match)) {
+            if (($number = EuSize::number($match[1])) !== null) {
+                $result['size'] = EuSize::label($number);
+                $text = str_replace($match[0], ' ', $text);
+            }
         }
 
         foreach (['ženske' => 'female', 'zenske' => 'female', 'ženska' => 'female', 'muske' => 'male', 'muške' => 'male', 'muska' => 'male', 'muška' => 'male', 'djeca' => 'kids', 'djeca' => 'kids'] as $word => $gender) {

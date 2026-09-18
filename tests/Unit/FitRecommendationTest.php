@@ -34,7 +34,7 @@ class FitRecommendationTest extends TestCase
         $this->assertStringContainsString('Adidas', $recommendation['reason']);
     }
 
-    public function test_community_brand_profiles_provide_a_lower_confidence_fallback(): void
+    public function test_community_brand_sizes_are_never_used_without_a_personal_anchor(): void
     {
         $known = Product::create(['brand' => 'Puma', 'name' => 'Puma Known', 'model' => 'Known', 'slug' => 'puma-known']);
         $target = Product::create(['brand' => 'Puma', 'name' => 'Puma Target', 'model' => 'Target', 'slug' => 'puma-target']);
@@ -42,9 +42,7 @@ class FitRecommendationTest extends TestCase
 
         $recommendation = app(FitRecommendation::class)->for($target, 'empty-session');
 
-        $this->assertSame('42', $recommendation['size']);
-        $this->assertLessThan(100, $recommendation['confidence']);
-        $this->assertStringContainsString('anonimnih', $recommendation['reason']);
+        $this->assertNull($recommendation);
     }
 
     public function test_account_linked_passport_entries_are_used_after_login(): void

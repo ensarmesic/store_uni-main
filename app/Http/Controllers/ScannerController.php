@@ -9,12 +9,13 @@ class ScannerController
 {
     public function index()
     {
-        return view('scanner.index');
+        return view('scanner.index', ['lensReady' => app(\App\Services\VisualSearch::class)->ready()]);
     }
 
     public function scan(Request $request, LabelScanner $scanner)
     {
         $data = $request->validate([
+            'mode' => ['nullable', 'in:label,visual'],
             'image' => ['required_without:label_text', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'label_text' => ['required_without:image', 'nullable', 'string', 'max:1000'],
         ], [
@@ -25,17 +26,30 @@ class ScannerController
         ]);
         if (! empty($data['label_text'])) {
             $result = $scanner->fromText($data['label_text']);
-            return view('scanner.index', compact('result'));
+            return $this->results($request, $result);
         }
         $file = $data['image'];
 
         try {
-            $result = $scanner->scan($file->getRealPath());
+            $result = ($data['mode'] ?? 'label') === 'visual'
+                ? app(\App\Services\VisualSearch::class)->search($file->getRealPath())
+                : $scanner->scan($file->getRealPath());
         } catch (\Throwable $exception) {
             report($exception);
             return back()->withErrors(['image' => 'Fotografiju trenutno ne možemo pročitati. Pokušaj jasniju sliku ili unesi tekst s etikete ispod.']);
         }
 
-        return view('scanner.index', compact('result'));
+        return $this->results($request, $result);
+    }
+
+    private function results(Request $request, array $result)
+    {
+        $decisions = [];
+        foreach ($result['matches'] as $product) {
+            $fit = app(\App\Services\FitRecommendation::class)->for($product, (string) $request->session()->get('fit_passport_key'), $request->session()->get('user_id'));
+            $size = $result['size'] ?: (($fit['suitable'] ?? false) ? $fit['size'] : null);
+            $decisions[$product->id] = app(\App\Services\PurchaseDecision::class)->for($product, $size, $fit);
+        }
+        return view('scanner.index', ['result' => $result, 'decisions' => $decisions, 'lensReady' => app(\App\Services\VisualSearch::class)->ready()]);
     }
 }

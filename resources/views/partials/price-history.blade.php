@@ -1,6 +1,6 @@
 <section class="chart history-panel" id="historija">
     <div class="history-heading"><div><div class="section-kicker">ZABILJEŽENE CIJENE / PO TRGOVINI</div><h2 class="section-title">Historija cijene</h2></div><nav aria-label="Period historije">@foreach([30,90] as $days)<a href="{{route('product.show',['slug'=>$product->slug,'size'=>request('size'),'days'=>$days])}}#historija" @if($historyChart['days']===$days) aria-current="page" @endif>{{$days}} dana</a>@endforeach</nav></div>
-    <p class="field-help">Najniža zabilježena cijena modela po trgovini i danu. Historija nije odvojena po veličinama. Praznine znače da za taj dan nema zapisa.</p>
+    <p class="field-help">Najniža zabilježena cijena {{$historyChart['size'] ? 'za EU '.$historyChart['size'] : 'modela bez odabrane veličine'}} po trgovini i danu. Praznine znače da za taj dan nema zapisa.</p>
     @if($historyChart['lastChecked'])<p class="field-help">Posljednja provjera ponude: {{$historyChart['lastChecked']->format('d.m.Y. H:i')}}.</p>@endif
     @if($historyChart['hasTrend'])
         <div class="history-legend">@foreach($historyChart['series'] as $line)<span><i style="background:{{$line['color']}}"></i>{{$line['name']}}</span>@endforeach</div>

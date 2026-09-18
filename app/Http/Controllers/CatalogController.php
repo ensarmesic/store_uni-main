@@ -77,20 +77,11 @@ class CatalogController
             ];
         });
 
-        $popularProducts = Cache::remember('catalog:popular:v2', 600, fn () => Product::query()
+        $popularProducts = Cache::remember('catalog:popular:v3', 600, fn () => Product::query()
             ->select('products.*')
-            ->selectRaw("CASE
-                WHEN UPPER(model) LIKE '%GEL-1130%' THEN 100
-                WHEN UPPER(model) LIKE '%AIR MAX%' THEN 95
-                WHEN UPPER(model) LIKE '%NOVABLAST%' THEN 90
-                WHEN UPPER(model) LIKE '%GEL-NIMBUS%' THEN 85
-                WHEN brand = 'NEW BALANCE' THEN 80
-                WHEN UPPER(model) LIKE '%TERREX%' THEN 75
-                WHEN UPPER(model) LIKE '%CARINA%' THEN 70
-                WHEN UPPER(model) LIKE '%UNO%' THEN 65
-                WHEN brand = 'ECCO' THEN 60
-                WHEN brand IN ('NIKE', 'ADIDAS', 'PUMA', 'SKECHERS') THEN 50
-                ELSE 10 END AS popularity_score")
+            ->selectSub(\Illuminate\Support\Facades\DB::table('product_interactions')
+                ->selectRaw("COALESCE(SUM(CASE kind WHEN 'outbound' THEN 5 WHEN 'favorite' THEN 4 WHEN 'alert' THEN 4 WHEN 'compare' THEN 2 ELSE 1 END), 0)")
+                ->whereColumn('product_id', 'products.id')->where('observed_on', '>=', now()->subDays(30)->toDateString()), 'popularity_score')
             ->with(['offers' => fn ($offers) => $offers->where('is_active', true)->with(['store', 'variants'])])
             ->withMin(['offers as display_min_price' => fn ($offers) => $offers->where('is_active', true)], 'price')
             ->withCount(['offers' => fn ($offers) => $offers->where('is_active', true)])
@@ -115,15 +106,19 @@ class CatalogController
             'offers.store', 'offers.variants', 'offers.priceHistories',
         ])->firstOrFail();
 
+        app(\App\Services\ProductInteractions::class)->record($request, $product, 'view');
         $insights = $priceInsights->for($product, $request->input('size'));
         $fit = ($request->session()->get('fit_passport_key') || $request->session()->get('user_id'))
             ? $fitRecommendation->for($product, (string) $request->session()->get('fit_passport_key'), $request->session()->get('user_id'))
             : null;
 
-        $historyChart = app(\App\Services\PriceHistoryChart::class)->for($product, (int) $request->input('days', 90));
+        $historyChart = app(\App\Services\PriceHistoryChart::class)->for($product, (int) $request->input('days', 90), $request->input('size'));
         $favoriteIds = app(\App\Services\ShoppingProfile::class)->favoriteIds($request);
         $selectedOffers = app(\App\Services\OfferSelection::class)->for($product, $request->input('size'));
-        return view('catalog.show', compact('product', 'insights', 'fit', 'historyChart', 'favoriteIds', 'selectedOffers'));
+        $decision = app(\App\Services\PurchaseDecision::class)->for($product, $request->input('size'), $fit);
+        $feedback = \App\Models\PurchaseFeedback::where('product_id', $product->id)->latest('updated_at')->get()->unique('owner_key');
+        $community = ['profiles' => $feedback->count(), 'kept' => $feedback->where('outcome', 'kept')->count(), 'returned' => $feedback->where('outcome', 'returned')->count(), 'just_right' => $feedback->where('fit', 'just_right')->count()];
+        return view('catalog.show', compact('product', 'insights', 'fit', 'historyChart', 'favoriteIds', 'selectedOffers', 'decision', 'community'));
     }
 
     private function offerFilter(Request $request): \Closure

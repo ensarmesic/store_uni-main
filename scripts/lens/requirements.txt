@@ -1,0 +1,4 @@
+transformers==4.57.6
+Pillow>=11.3,<13
+numpy>=2.2,<3
+# Install the CPU build of torch separately from https://download.pytorch.org/whl/cpu.

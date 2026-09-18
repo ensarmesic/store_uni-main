@@ -7,6 +7,7 @@ use App\Models\Offer;
 use App\Models\OfferVariant;
 use App\Models\OfferVariantAvailabilityHistory;
 use App\Models\PriceHistory;
+use App\Models\VariantPriceHistory;
 use App\Models\Product;
 use App\Models\ProductMatch;
 use App\Models\Store;
@@ -74,6 +75,7 @@ class ImportManager
                             'availability' => $data['availability'] ?? 'unknown', 'description' => $data['description'] ?? null,
                             'image_url' => $data['image_url'] ?? null, 'product_url' => $data['product_url'], 'last_checked_at' => now(),
                             'last_seen_at' => now(), 'missing_since' => null, 'is_active' => true,
+                            'sizes_checked_at' => array_key_exists('available_sizes', $data) ? now() : $old?->sizes_checked_at,
                         ]);
                         $changes[$old ? 'offers_updated' : 'offers_created']++;
 
@@ -89,6 +91,12 @@ class ImportManager
                             $variant->availability = 'in_stock';
                             $variant->price = $data['variant_prices'][$size] ?? null;
                             $variant->save();
+                            $effectivePrice = (float) ($variant->price ?? $offer->price);
+                            if ($effectivePrice > 0) {
+                                VariantPriceHistory::updateOrCreate([
+                                    'offer_variant_id' => $variant->id, 'observed_on' => now()->toDateString(),
+                                ], ['price' => $effectivePrice, 'recorded_at' => now()]);
+                            }
                             if ($wasNew || $variant->wasChanged('availability')) {
                                 OfferVariantAvailabilityHistory::create([
                                     'offer_variant_id' => $variant->id,

@@ -25,6 +25,8 @@ In PowerShell, use `Copy-Item .env.example .env` and `New-Item database/database
 
 ## Product intelligence
 
+AErchi Intelligence 2.0 dodaje Decision Card, Stock Pressure, Buy/Wait, Fit DNA odnose između modela, `/agent`, `/watch`, lokalnu vizuelnu pretragu na `/scanner`, `/purchases` i stvarne signale popularnosti. Nakon `php artisan migrate`, nova historija veličina nastaje kroz naredne uvoze. Detalji rada, lokalni Lens setup i email konfiguracija: [Intelligence operations](docs/intelligence-operations.md).
+
 Create a username/password account at `/account` to keep Fit Passport entries, Fit Graph relationships, and alerts connected to one profile. Natural search is available from `/catalog`, for example `crne Nike muske 43 do 180 KM`.
 
 Use `/scanner` to upload a shoe label photo. The local OCR backend is Tesseract; set `TESSERACT_PATH` in `.env` when it is not installed at the default Windows path. Price and restock alerts are checked with:

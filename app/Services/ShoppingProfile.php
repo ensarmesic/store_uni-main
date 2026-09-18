@@ -35,6 +35,23 @@ class ShoppingProfile
                     Favorite::firstOrCreate(['owner_key' => 'user:'.$user->id, 'product_id' => $favorite->product_id]);
                 }
                 Favorite::where('owner_key', $key)->delete();
+                foreach (\App\Models\PurchaseFeedback::where('owner_key', $key)->get() as $feedback) {
+                    \App\Models\PurchaseFeedback::firstOrCreate(['owner_key' => 'user:'.$user->id, 'product_id' => $feedback->product_id, 'size' => $feedback->size],
+                        ['outcome' => $feedback->outcome, 'fit' => $feedback->fit]);
+                    $feedback->delete();
+                }
+                foreach (\App\Models\ShoppingWatch::where('owner_key', $key)->get() as $watch) {
+                    $existing = \App\Models\ShoppingWatch::where('owner_key', 'user:'.$user->id)
+                        ->where('product_id', $watch->product_id)->where('size', $watch->size)->first();
+                    if ($existing) {
+                        // Preserve notifications, assigning unique generations in the destination watch.
+                        foreach ($watch->notifications()->orderBy('id')->get() as $notification) {
+                            $existing->increment('generation');
+                            $notification->update(['shopping_watch_id' => $existing->id, 'generation' => $existing->generation]);
+                        }
+                        $watch->delete();
+                    } else $watch->update(['owner_key' => 'user:'.$user->id]);
+                }
             });
         }
         if ($preferences = $request->session()->pull('shopping_preferences')) {

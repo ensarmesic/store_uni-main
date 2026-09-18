@@ -55,7 +55,7 @@
     </div>
 </section>
 <section class="shell popular-zone" aria-labelledby="popular-title">
-    <div class="popular-head"><div><div class="section-kicker">01 / POPULARNO SADA</div><h2 id="popular-title">PAROVI KOJI<br><em>PRIVLAČE POGLEDE.</em></h2></div><p>Izdvojeno prema aktuelnosti modela, dostupnosti, broju BiH ponuda i sniženjima u katalogu.</p></div>
+    <div class="popular-head"><div><div class="section-kicker">01 / IZDVOJENO IZ KATALOGA</div><h2 id="popular-title">PAROVI KOJI<br><em>PRIVLAČE POGLEDE.</em></h2></div><p>Prema pregledima, favoritima, poređenjima, praćenjima i odlascima u trgovine u posljednjih 30 dana. Bez interakcija prednost imaju modeli s više ponuda.</p></div>
     <div class="popular-grid">
     @foreach($popularProducts as $popular)
         @php $popularOffers=$popular->offers;$popularBest=$popularOffers->sortBy('price')->first();$popularImageOffer=$popularOffers->firstWhere('image_url','!=',null);$popularImage=$popularImageOffer?->image_url;$popularSale=$popularBest?->old_price&&$popularBest->old_price>$popularBest->price; @endphp
